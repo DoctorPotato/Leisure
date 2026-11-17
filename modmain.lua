@@ -254,6 +254,7 @@ if env and env.AddComponentPostInit then
             local num_helpers = 0
             for i, v in ipairs(ents) do
                 if v ~= self.inst
+                    and v.components.combat ~= nil
                     and not (v.components.health ~= nil and v.components.health:IsDead())
                     and fn(v, self.inst)
                     and v.components.combat:SuggestTarget(target) then
