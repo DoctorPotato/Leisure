@@ -667,50 +667,54 @@ end
 
 function Naked:OnSave()	
 	return {
-	titsV3 = self.titssize, 
-	dickV3 = self.dick, 
-	nude_buildV3 = self.nude_build, 
-	head_disguiseV2 = self.head_disguise, -- So we don't crash on old mod version.
-	body_disguiseV3 = self.body_disguise, 
-	hand_disguiseV3 = self.hand_disguise, 
-	legs_disguiseV3 = self.legs_disguise, 
-	feet_disguiseV3 = self.feet_disguise, 
+		titsV3 = self.titssize, 
+		dickV3 = self.dick, 
+		nude_buildV3 = self.nude_build, 
+		head_disguiseV2 = self.head_disguise, -- So we don't crash on old mod version.
+		body_disguiseV3 = self.body_disguise, 
+		hand_disguiseV3 = self.hand_disguise, 
+		legs_disguiseV3 = self.legs_disguise, 
+		feet_disguiseV3 = self.feet_disguise,
+		-- Save the state flags and stockings!
+		body_nudeV3 = self.body_nude,
+		hand_nudeV3 = self.hand_nude,
+		legs_nudeV3 = self.legs_nude,
+		feet_nudeV3 = self.feet_nude,
+		stockingsV3 = self.stockings,
 	}, nil
 end
 
 function Naked:OnLoad(data)
 	if data ~= nil then
-        if data.nude_build then
-		    self.nude_build = data.nude_build
+		local nude_build = data.nude_buildV3 or data.nude_build
+		if nude_build then
+			self.nude_build = nude_build
 		end
 	    	
-		if data.tits then		    
-			if data.tits ~= "none" then
-		        self.titssize = data.tits
-	            self.tits_build = GetTitsBySize(self.inst.prefab, self.titssize)
-	            if self.tits_build == nil then
-	                self.tits_build = self.nude_build
-	            end
-			    self.havetits = true
+		local tits = data.titsV3 or data.tits
+		if tits then		    
+			if tits ~= "none" then
+				self.titssize = tits
+				self.tits_build = GetTitsBySize(self.inst.prefab, self.titssize)
+				if self.tits_build == nil then
+					self.tits_build = self.nude_build
+				end
+				self.havetits = true
 			else
-			    self.titssize = data.tits
+				self.titssize = tits
 				self.tits_build = self.nude_build
 			end
 		end
-		if data.dick then		    
-			if data.dick ~= "none" then
-			    self.dick = data.dick
-			    self.inst.AnimState:OverrideSymbol("dick", self.dick, "dick")
-				if data.dick == "strapon_dick" then
-				    self.inst.dildo_client:set(true)
-				end
-				self.inst:AddTag("HaveDick")
-			else
-			    self.inst:RemoveTag("HaveDick")
-			    self.dick = "none"
-			    self.inst.AnimState:ClearOverrideSymbol("dick")
+
+		local dick = data.dickV3 or data.dick
+		if dick and dick ~= "none" and dick ~= "" then		    
+			self.dick = dick
+			self.inst.AnimState:OverrideSymbol("dick", self.dick, "dick")
+			if dick == "strapon_dick" then
+				self.inst.dildo_client:set(true)
 			end
-		elseif data.dick == nil or data.dick == "none" or data.dick == "" then
+			self.inst:AddTag("HaveDick")
+		else
 			self.inst:RemoveTag("HaveDick")
 			self.dick = "none"
 			self.inst.AnimState:ClearOverrideSymbol("dick")
@@ -739,7 +743,23 @@ function Naked:OnLoad(data)
 		if data.feet_disguiseV3 then
 		    self.feet_disguise = data.feet_disguiseV3
 		end
-		SetNude(self)
+
+		-- Restore the state flags and stockings
+		if data.body_nudeV3 ~= nil then self.body_nude = data.body_nudeV3 end
+		if data.hand_nudeV3 ~= nil then self.hand_nude = data.hand_nudeV3 end
+		if data.legs_nudeV3 ~= nil then self.legs_nude = data.legs_nudeV3 end
+		if data.feet_nudeV3 ~= nil then self.feet_nude = data.feet_nudeV3 end
+		if data.stockingsV3 ~= nil then self.stockings = data.stockingsV3 end
+
+		self.inst:DoTaskInTime(0, function()
+			if self.inst.nudebody_client ~= nil then
+				self.inst.nudebody_client:set(self.body_nude)
+				self.inst.nudehand_client:set(self.hand_nude)
+				self.inst.nudelegs_client:set(self.legs_nude)
+				self.inst.nudefeet_client:set(self.feet_nude)
+			end
+			SetNude(self)
+		end)
     end
 end
 
